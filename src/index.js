@@ -59,6 +59,7 @@ export default class Sound extends React.Component {
     onStop: T.func,
     onFinishedPlaying: T.func,
     autoLoad: T.bool,
+    loop: T.bool,
   };
 
   static defaultProps = {
@@ -71,12 +72,13 @@ export default class Sound extends React.Component {
     onStop: noop,
     onFinishedPlaying: noop,
     autoLoad: false,
+    loop: false,
   };
 
   componentDidMount() {
     this.createSound(sound => {
       if (this.props.playStatus === playStatuses.PLAYING) {
-        sound.play();
+        this.playSound(sound);
       }
     });
   }
@@ -91,7 +93,7 @@ export default class Sound extends React.Component {
 
       if (this.props.playStatus === playStatuses.PLAYING) {
         if (sound.playState === 0) {
-          sound.play();
+          this.playSound(sound);
         }
 
         if (sound.paused) {
@@ -129,6 +131,19 @@ export default class Sound extends React.Component {
     } else {
       withSound(this.sound);
     }
+  }
+
+  playSound(sound) {
+    const that = this;
+    sound.play({
+      onfinish: function() {
+        if (that.props.loop && that.props.playStatus === playStatuses.PLAYING) {
+          that.playSound(sound);
+        } else {
+          that.props.onFinishedPlaying();
+        }
+      }
+    });
   }
 
   createSound(callback) {
